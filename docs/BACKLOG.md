@@ -99,15 +99,17 @@ Já ticketado em `wiki/task-now.md` como JAVA-RT-01. Mesmo escopo, ID canônico 
 ---
 
 ### 🎫 ATR-203 — ExecutionEngine com @Async
-**Tipo:** Story · **Prioridade:** 🟠 High · **Pontos:** 5 · **Status:** 🔲 To Do
+**Tipo:** Story · **Prioridade:** 🟠 High · **Pontos:** 5 · **Status:** ✅ Done (10/08, commits `ca70b3f`, `c86d21b`, `f9497b3`)
 **Bloqueador:** ATR-201, ATR-202
 
-**Descrição:** `ExecutionEngine.execute(Task task)` roda em thread separada (`@Async`), atualiza o estado via state machine em cada fase, simula o trabalho do agente (pode ser um sleep + resultado mockado nesta fase — a chamada real ao agente é fora de escopo do router).
+**Descrição:** `ExecutionEngine.execute(Task task)` roda em thread separada (`@Async`), chamado automaticamente por `TaskService.create()` só quando um agente foi atribuído. Persiste `RUNNING` → `COMPLETED` na Task — não simula trabalho real do agente ainda (fora de escopo).
 
 **Acceptance Criteria:**
-- [ ] `@EnableAsync` configurado
-- [ ] Chamar `POST /tasks/{id}/execute` (ou automático após routing) não bloqueia a resposta HTTP
-- [ ] Estado da Task muda de forma observável via `GET /tasks/{id}` enquanto a execução roda
+- [x] `@EnableAsync` configurado (`ProcurementApiApplication`)
+- [x] `create()` não bloqueia a resposta HTTP — provado com delay artificial de 3s em `execute()` (removido depois), `TaskServiceTest` confirma retorno em <500ms
+- [x] Estado da Task muda de forma observável via `GET /tasks/{id}` — `RUNNING` → `COMPLETED` persistido via `TaskRepository`
+
+**Gap real, não escondido:** transições de status são atribuição direta de campo (`task.setStatus(...)`), não passam pela `TaskStateMachineConfig` do ATR-202 — nenhuma validação de transição acontece nesse ponto do código ainda.
 
 **Prova de entendimento:** Sem `@Async`, o que aconteceria com a requisição HTTP se a "execução" demorasse 5 segundos? Por que isso é um problema real num roteador de tasks com múltiplos agentes?
 

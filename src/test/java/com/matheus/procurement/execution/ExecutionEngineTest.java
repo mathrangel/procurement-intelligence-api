@@ -23,7 +23,7 @@ public class ExecutionEngineTest  {
 
         String testThreadName = Thread.currentThread().getName();
         CompletableFuture<String> result = executionEngine.execute(task);
-        
+
         String resultTest = result.get();
 
         assertThat(resultTest).isNotEqualTo(testThreadName);
